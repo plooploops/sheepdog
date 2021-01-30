@@ -5,7 +5,7 @@ sudo -u postgres createdb -O travis -p 5432 travis
 sudo -u postgres createuser -s -p 5433 travis
 sudo -u postgres createdb -O travis -p 5433 travis
 
-source ~/virtualenv/python2.7/bin/activate
+source ./py38-venv/bin/activate
 
 python setup.py develop
 

@@ -14,6 +14,9 @@ WORKDIR /sheepdog
 
 RUN python -m pip install --upgrade pip \
     && python -m pip install --upgrade setuptools \
+    && python -m venv py-venv \
+    && . ./py-venv/bin/activate \
+    && python /sheepdog/setup.py install \
     && pip --version \
     && pip install -r requirements.txt
 

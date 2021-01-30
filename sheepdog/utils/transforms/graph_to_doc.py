@@ -16,7 +16,12 @@ import flask
 import psqlgraph
 
 from sheepdog import dictionary
-from sheepdog.errors import InternalError, NotFoundError, UnsupportedError, UserError
+from sheepdog.errors import (
+    InternalError,
+    NotFoundError,
+    UnsupportedError,
+    UserError,
+)  # noqa: E501
 from sheepdog.globals import DELIMITERS, SUB_DELIMITERS, SUPPORTED_FORMATS
 
 
@@ -41,7 +46,9 @@ def get_node_category(node_type):
     """
     cls = psqlgraph.Node.get_subclass(node_type)
     if cls is None:
-        raise UserError('Node type "{}" not found in dictionary'.format(node_type))
+        raise UserError(
+            'Node type "{}" not found in dictionary'.format(node_type)
+        )  # noqa: E501
     return cls._dictionary.get("category")
 
 
@@ -138,6 +145,9 @@ def get_node_non_link_json(node, props):
             entity[key] = node.label
         elif key == "id":
             entity[key] = node.node_id
+        elif key in node._props:
+            # objectid is in _props per integration test
+            entity[key] = node._props[key]
         else:
             entity[key] = node[key]
 
@@ -153,7 +163,7 @@ def list_to_comma_string(val, file_format):
     """
 
     if val is None:
-        """ If a field is empty we must replace it with an empty string for tsv/csv exports and leave it as None for json exports """
+        """ If a field is empty we must replace it with an empty string for tsv/csv exports and leave it as None for json exports """  # noqa: E501
         if file_format == "json":
             return val
         return ""
@@ -249,7 +259,11 @@ def _get_links_json(link, exclude_id):
     """Return parsed link template from link schema in json form."""
     target_schema = dictionary.schema[link["target_type"]]
     link_template = dict(
-        {k: None for subkeys in target_schema.get("uniqueKeys", []) for k in subkeys}
+        {
+            k: None
+            for subkeys in target_schema.get("uniqueKeys", [])
+            for k in subkeys  # noqa: E501
+        }
     )
     if "project_id" in link_template:
         del link_template["project_id"]
@@ -327,7 +341,9 @@ def is_property_hidden(key, schema, exclude_id):
 def entity_to_template(label, exclude_id=True, file_format="tsv", **kwargs):
     """Return template dict for given label."""
     if label not in dictionary.schema:
-        raise NotFoundError("Entity type {} is not in dictionary".format(label))
+        raise NotFoundError(
+            "Entity type {} is not in dictionary".format(label)
+        )  # noqa: E501
     if file_format not in SUPPORTED_FORMATS:
         raise UnsupportedError(file_format)
     schema = dictionary.schema[label]
@@ -397,7 +413,9 @@ def entity_to_template_delimited(links, schema, exclude_id):
     # just the concatenation of 4 ordered lists
     keys = []
     visible_keys = [
-        key for key in ordered if not is_property_hidden(key, schema, exclude_id)
+        key
+        for key in ordered
+        if not is_property_hidden(key, schema, exclude_id)  # noqa: E501
     ]
     for key in visible_keys:
         if "required" in schema and key in schema["required"]:
@@ -519,7 +537,8 @@ class ExportFile(object):
             if edge.src in visited:
                 continue
             should_add = (
-                not self.category or self.category == edge.src._dictionary["category"]
+                not self.category
+                or self.category == edge.src._dictionary["category"]  # noqa: E501
             )
             if should_add:
                 visited.append(edge.src)
@@ -544,10 +563,14 @@ class ExportFile(object):
     def filename(self):
         """Return a filename string based on format and number of results."""
         if not self.result:
-            raise InternalError("Unable to determine file name with no results")
+            raise InternalError(
+                "Unable to determine file name with no results"
+            )  # noqa: E501
 
         if self.is_delimited and self.is_singular:
-            return "{}.{}".format(list(self.result.keys())[0], self.file_format)
+            return "{}.{}".format(
+                list(self.result.keys())[0], self.file_format
+            )  # noqa: E501
         elif self.is_delimited:
             return "gdc_export_{}.tar.gz".format(self._get_sha())
         elif self.is_json and self.is_singular:
@@ -582,7 +605,9 @@ class ExportFile(object):
             self.result[label] = buff
             writer.writerow(non_link_titles + link_titles)
 
-            for tsv_line in get_tsv_dicts(entities, non_link_titles, link_titles):
+            for tsv_line in get_tsv_dicts(
+                entities, non_link_titles, link_titles
+            ):  # noqa: E501
                 writer.writerow(tsv_line)
 
     def get_delimited_response(self):
@@ -606,7 +631,9 @@ class ExportFile(object):
     def get_json_response(self):
         """Yield single json string."""
         # Throw away the keys because re-upload is not expecting them.
-        yield json_dumps_formatted([r for v in self.result.values() for r in v])
+        yield json_dumps_formatted(
+            [r for v in self.result.values() for r in v]
+        )  # noqa: E501
 
     def get_response(self):
         """Return response based on format and number of results."""
@@ -663,7 +690,9 @@ def validate_export_node(node_label):
         UserError: if the node cannot be exported
     """
     if node_label not in dictionary.schema:
-        raise UserError("dictionary does not have node with type {}".format(node_label))
+        raise UserError(
+            "dictionary does not have node with type {}".format(node_label)
+        )  # noqa: E501
     category = get_node_category(node_label)
     if category in UNSUPPORTED_EXPORT_NODE_CATEGORIES:
         raise UserError("cannot export node with category `internal`")
@@ -845,7 +874,7 @@ def export_all(node_label, project_id, file_format, db, without_id):
                     prop: list_to_comma_string(node[prop], file_format)
                     for prop in props
                 }
-                if current_obj != None:
+                if current_obj is not None:
                     yield from yield_result(
                         current_obj,
                         js_list_separator,
@@ -856,24 +885,34 @@ def export_all(node_label, project_id, file_format, db, without_id):
                     js_list_separator = ","
                 last_id = node_id
                 current_obj = new_obj
-            current_obj = append_links_to_obj(result, current_obj, titles_linked)
+            current_obj = append_links_to_obj(
+                result, current_obj, titles_linked
+            )  # noqa: E501
 
-        if current_obj != None:
+        if current_obj is not None:
             yield from yield_result(
-                current_obj, js_list_separator, props, titles_linked, file_format
+                current_obj,
+                js_list_separator,
+                props,
+                titles_linked,
+                file_format,  # noqa: E501
             )
 
         if file_format == "json":
             yield "]}"
 
 
-def yield_result(current_obj, js_list_separator, props, titles_linked, file_format):
+def yield_result(
+    current_obj, js_list_separator, props, titles_linked, file_format
+):  # noqa: E501
     if file_format == "json":
         yield js_list_separator + json.dumps(reformat_prop(current_obj))
     else:
         yield "{}\n".format(
             result_to_delimited_file(
-                dict_props_to_list(current_obj, props, titles_linked, file_format),
+                dict_props_to_list(
+                    current_obj, props, titles_linked, file_format
+                ),  # noqa: E501
                 file_format,
             )
         )
@@ -882,7 +921,9 @@ def yield_result(current_obj, js_list_separator, props, titles_linked, file_form
 def make_linked_props(cls, titles_linked):
     return [
         getattr(cls._pg_links[link_name]["dst_type"], link_prop)
-        for (link_name, link_prop) in list(map(format_linked_prop, titles_linked))
+        for (link_name, link_prop) in list(
+            map(format_linked_prop, titles_linked)
+        )  # noqa: E501
     ]
 
 
@@ -897,7 +938,10 @@ def dict_props_to_list(obj, props, titles_linked, file_format):
             list(
                 filter(
                     lambda x: x != "",
-                    map(lambda x: str(x.get(link_prop, "")), obj.get(link_name, [])),
+                    map(
+                        lambda x: str(x.get(link_prop, "")),
+                        obj.get(link_name, []),  # noqa: E501
+                    ),
                 )
             )
         )
