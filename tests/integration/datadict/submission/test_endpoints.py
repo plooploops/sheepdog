@@ -173,7 +173,10 @@ def test_project_creation_endpoint(client, pg_driver, submitter):
     with pg_driver.session_scope():
         assert pg_driver.nodes(md.Project).count() == 1
         n_cgci = (
-            pg_driver.nodes(md.Project).path("programs").props(name="CGCI").count()  # noqa: E501
+            pg_driver.nodes(md.Project)
+            .path("programs")
+            .props(name="CGCI")
+            .count()  # noqa: E501
         )
         assert n_cgci == 1
     assert resp.json["links"] == ["/v0/submission/CGCI/BLGSP"], resp.json
@@ -831,7 +834,8 @@ def do_test_export(client, pg_driver, submitter, node_type, format_type):
     if format_type == "tsv":
         str_data = str(r.data, "utf-8")
         assert (
-            len(str_data.strip().split("\n")) == experimental_metadata_count + 1  # noqa: E501
+            len(str_data.strip().split("\n"))
+            == experimental_metadata_count + 1  # noqa: E501
         )
         return str_data
     else:
@@ -1272,7 +1276,8 @@ def test_update_to_null_invalid(client, pg_driver, cgci_blgsp, submitter):
         == "BLGSP-71-06-00019"
     )
     assert (
-        json.loads(resp.data)["entities"][0]["properties"]["type"] == "experiment"  # noqa: E501
+        json.loads(resp.data)["entities"][0]["properties"]["type"]
+        == "experiment"  # noqa: E501
     )
     assert json.loads(resp.data)["entities"][0]["properties"]["id"] == id
 
@@ -1451,7 +1456,8 @@ def test_update_to_null_enum(client, pg_driver, cgci_blgsp, submitter):
     )
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
     assert (
-        json.loads(resp.data)["entities"][0]["properties"]["type_of_data"] is None  # noqa: E501
+        json.loads(resp.data)["entities"][0]["properties"]["type_of_data"]
+        is None  # noqa: E501
     )
 
 

@@ -19,4 +19,4 @@ mkdir -p tests/integration/resources/keys; cd tests/integration/resources/keys; 
 # loading different datamodels
 py.test -vv tests/integration/datadict
 py.test -vv tests/integration/datadictwithobjid
-py.test -vv tests/unit
+cd
